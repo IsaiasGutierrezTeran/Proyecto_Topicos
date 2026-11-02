@@ -67,15 +67,17 @@ def predecir(entrada: EntradaTexto):
             detail="El modelo todavía no está entrenado"
         )
 
-    prediccion = modelo.predict([entrada.texto])[0]
-
-    probabilidades = {
-        str(clase): float(probabilidad)
-        for clase, probabilidad in zip(
-            modelo.classes_,
-            modelo.predict_proba([entrada.texto])[0]
-        )
-    }
+    try:
+        prediccion = modelo.predict([entrada.texto])[0]
+        probabilidades = {
+            str(clase): float(probabilidad)
+            for clase, probabilidad in zip(
+                modelo.classes_,
+                modelo.predict_proba([entrada.texto])[0]
+            )
+        }
+    except (ValueError, TypeError) as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
 
     return {
         "sentimiento": str(prediccion),
