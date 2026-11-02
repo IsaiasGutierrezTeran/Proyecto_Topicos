@@ -1,0 +1,80 @@
+{
+  "modelo_ganador": "Regresión logística",
+  "mejores_parametros": {
+    "clasificador__C": 0.5,
+    "nlp__metodo": "basico",
+    "tfidf__ngram_range": [
+      1,
+      1
+    ]
+  },
+  "f1_macro_cv": 0.62291,
+  "f1_macro_baseline_mayoritaria": 0.16667,
+  "preprocesamiento_evaluado": [
+    "basico"
+  ],
+  "pipeline_completo_con_nlp_de_isaias": false,
+  "accuracy_test": 0.59444,
+  "precision_macro_test": 0.59206,
+  "recall_macro_test": 0.59444,
+  "f1_macro_test": 0.5927,
+  "clases": [
+    "negativo",
+    "neutro",
+    "positivo"
+  ],
+  "matriz_confusion": [
+    [
+      37,
+      17,
+      6
+    ],
+    [
+      17,
+      27,
+      16
+    ],
+    [
+      3,
+      14,
+      43
+    ]
+  ],
+  "reporte_clasificacion": {
+    "negativo": {
+      "precision": 0.6491228070175439,
+      "recall": 0.6166666666666667,
+      "f1-score": 0.6324786324786325,
+      "support": 60.0
+    },
+    "neutro": {
+      "precision": 0.46551724137931033,
+      "recall": 0.45,
+      "f1-score": 0.4576271186440678,
+      "support": 60.0
+    },
+    "positivo": {
+      "precision": 0.6615384615384615,
+      "recall": 0.7166666666666667,
+      "f1-score": 0.688,
+      "support": 60.0
+    },
+    "accuracy": 0.5944444444444444,
+    "macro avg": {
+      "precision": 0.5920595033117718,
+      "recall": 0.5944444444444444,
+      "f1-score": 0.5927019170409001,
+      "support": 180.0
+    },
+    "weighted avg": {
+      "precision": 0.5920595033117719,
+      "recall": 0.5944444444444444,
+      "f1-score": 0.5927019170409001,
+      "support": 180.0
+    }
+  },
+  "train_ejemplos": 600,
+  "test_ejemplos": 180,
+  "semilla": 42,
+  "nota": "La selección se hizo con CV sobre train; test se usó solo para evaluar el ganador."
+}
