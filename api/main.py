@@ -1,4 +1,4 @@
-
+from fastapi.responses import FileResponse
 import json
 from functools import lru_cache
 from pathlib import Path
@@ -90,6 +90,11 @@ def obtener_metricas():
             status_code=503,
             detail="Las métricas todavía no están disponibles"
         )
+@app.get("/", include_in_schema=False)
+def mostrar_frontend():
+    return FileResponse(
+        BASE_DIR / "frontend" / "index.html"
+    )
 
     with open(METRICAS_PATH, "r", encoding="utf-8") as archivo:
         return json.load(archivo)
