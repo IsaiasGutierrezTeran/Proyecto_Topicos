@@ -1,0 +1,19 @@
+
+# Entornos virtuales
+.venv/
+venv/
+
+# Archivos temporales de Python
+__pycache__/
+*.pyc
+
+# Variables de entorno privadas
+.env
+.env.*
+
+# Cachés de pruebas
+.pytest_cache/
+
+# Archivos temporales
+*.log
+.DS_Store
