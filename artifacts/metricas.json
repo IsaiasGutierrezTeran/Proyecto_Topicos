@@ -2,22 +2,23 @@
   "modelo_ganador": "Regresión logística",
   "mejores_parametros": {
     "clasificador__C": 0.5,
-    "nlp__metodo": "basico",
+    "nlp__metodo": "stemming",
     "tfidf__ngram_range": [
       1,
-      1
+      2
     ]
   },
-  "f1_macro_cv": 0.62291,
+  "f1_macro_cv": 0.59622,
   "f1_macro_baseline_mayoritaria": 0.16667,
   "preprocesamiento_evaluado": [
-    "basico"
+    "stemming",
+    "lematizacion"
   ],
-  "pipeline_completo_con_nlp_de_isaias": false,
-  "accuracy_test": 0.59444,
-  "precision_macro_test": 0.59206,
-  "recall_macro_test": 0.59444,
-  "f1_macro_test": 0.5927,
+  "pipeline_completo_con_nlp_de_isaias": true,
+  "accuracy_test": 0.61667,
+  "precision_macro_test": 0.60253,
+  "recall_macro_test": 0.61667,
+  "f1_macro_test": 0.60431,
   "clases": [
     "negativo",
     "neutro",
@@ -25,51 +26,51 @@
   ],
   "matriz_confusion": [
     [
-      37,
-      17,
-      6
+      41,
+      12,
+      7
     ],
     [
-      17,
-      27,
-      16
+      24,
+      22,
+      14
     ],
     [
-      3,
-      14,
-      43
+      2,
+      10,
+      48
     ]
   ],
   "reporte_clasificacion": {
     "negativo": {
-      "precision": 0.6491228070175439,
-      "recall": 0.6166666666666667,
-      "f1-score": 0.6324786324786325,
+      "precision": 0.6119402985074627,
+      "recall": 0.6833333333333333,
+      "f1-score": 0.6456692913385826,
       "support": 60.0
     },
     "neutro": {
-      "precision": 0.46551724137931033,
-      "recall": 0.45,
-      "f1-score": 0.4576271186440678,
+      "precision": 0.5,
+      "recall": 0.36666666666666664,
+      "f1-score": 0.4230769230769231,
       "support": 60.0
     },
     "positivo": {
-      "precision": 0.6615384615384615,
-      "recall": 0.7166666666666667,
-      "f1-score": 0.688,
+      "precision": 0.6956521739130435,
+      "recall": 0.8,
+      "f1-score": 0.7441860465116279,
       "support": 60.0
     },
-    "accuracy": 0.5944444444444444,
+    "accuracy": 0.6166666666666667,
     "macro avg": {
-      "precision": 0.5920595033117718,
-      "recall": 0.5944444444444444,
-      "f1-score": 0.5927019170409001,
+      "precision": 0.6025308241401687,
+      "recall": 0.6166666666666667,
+      "f1-score": 0.6043107536423779,
       "support": 180.0
     },
     "weighted avg": {
-      "precision": 0.5920595033117719,
-      "recall": 0.5944444444444444,
-      "f1-score": 0.5927019170409001,
+      "precision": 0.6025308241401687,
+      "recall": 0.6166666666666667,
+      "f1-score": 0.6043107536423779,
       "support": 180.0
     }
   },
