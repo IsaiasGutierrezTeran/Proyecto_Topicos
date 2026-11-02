@@ -1,0 +1,27 @@
+{
+  "fuente": "mteb/amazon_reviews_multi",
+  "idioma": "es",
+  "url": "https://huggingface.co/datasets/mteb/amazon_reviews_multi",
+  "url_train": "https://huggingface.co/datasets/mteb/amazon_reviews_multi/resolve/main/es/train.jsonl",
+  "url_test": "https://huggingface.co/datasets/mteb/amazon_reviews_multi/resolve/main/es/test.jsonl",
+  "fecha_descarga_utc": "2026-11-02T19:11:27.376265+00:00",
+  "semilla": 42,
+  "split_test_independiente": true,
+  "total_origen_train": 200000,
+  "total_origen_test": 5000,
+  "tamano_train": 600,
+  "tamano_test": 180,
+  "distribucion_train": {
+    "positivo": 200,
+    "negativo": 200,
+    "neutro": 200
+  },
+  "distribucion_test": {
+    "positivo": 60,
+    "negativo": 60,
+    "neutro": 60
+  },
+  "criterio": "1-2 estrellas=negativo; 3=neutro; 4-5=positivo",
+  "licencia": "NO VERIFICADA en la ficha del espejo mteb al 2026-11-02",
+  "nota_licencia": "Revisar y documentar las condiciones del corpus original antes de redistribuir reseñas."
+}
