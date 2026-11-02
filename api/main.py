@@ -83,6 +83,7 @@ def predecir(entrada: EntradaTexto):
     }
 
 
+
 @app.get("/metricas")
 def obtener_metricas():
     if not METRICAS_PATH.is_file():
@@ -90,11 +91,22 @@ def obtener_metricas():
             status_code=503,
             detail="Las métricas todavía no están disponibles"
         )
+
+    with open(METRICAS_PATH, "r", encoding="utf-8") as archivo:
+        metricas = json.load(archivo)
+
+    if metricas is None:
+        raise HTTPException(
+            status_code=503,
+            detail="El archivo de métricas está vacío"
+        )
+
+    return metricas
+
+
 @app.get("/", include_in_schema=False)
 def mostrar_frontend():
     return FileResponse(
         BASE_DIR / "frontend" / "index.html"
     )
 
-    with open(METRICAS_PATH, "r", encoding="utf-8") as archivo:
-        return json.load(archivo)
