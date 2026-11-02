@@ -12,15 +12,51 @@ vm.runInNewContext(script, {
 });
 (async () => {
   const metrics = JSON.parse(fs.readFileSync('artifacts/metricas.json', 'utf8'));
+  for (const texto of ['', '  ', 'ab', 'a'.repeat(5001)]) {
+    app.texto.value = texto;
+    const antes = requests.length;
+    await app.analizar();
+    assert.ok(app.error.value);
+    assert.equal(requests.length, antes);
+  }
+  for (const ejemplo of app.ejemplos) {
+    assert.ok(ejemplo.texto.length >= 3 && ejemplo.texto.length <= 5000);
+  }
+  app.procesamiento.value = {tokens:['no', 'me', 'gusta', 'me'], sin_stopwords:['no', 'gusta']};
+  assert.deepEqual(Array.from(app.eliminadas.value), ['me', 'me']);
+  assert.equal(app.etapasNlp.value.length, 6);
+  app.procesamiento.value = {};
+  assert.equal(app.eliminadas.value, null);
+  assert.equal(app.etapasNlp.value[0].valor, 'No disponible');
   response = () => ({ok:true, json:async()=>metrics});
   await app.cargarMetricas();
   assert.equal(app.incompletos.value, false);
   assert.equal(app.matrizValida.value, true);
   assert.deepEqual(Array.from(app.clases.value), metrics.clases);
-  assert.match(app.porcentaje(metrics.accuracy_test), /59[.,]44%/);
+  // El resultado esperado depende del artefacto vigente, no de un entrenamiento anterior.
+  const claves = ['accuracy_test', 'precision_macro_test', 'recall_macro_test',
+    'f1_macro_test', 'f1_macro_cv', 'f1_macro_baseline_mayoritaria'];
+  for (const clave of claves) {
+    const valor = metrics[clave];
+    assert.equal(typeof valor, 'number', `${clave} debe ser numérico`);
+    assert.ok(Number.isFinite(valor) && valor >= 0 && valor <= 1, `${clave} fuera de rango`);
+    const esperado = (valor * 100).toFixed(2).replace('.', ',') + '%';
+    const resultado = app.porcentaje(valor);
+    assert.match(resultado, /^\d{1,3},\d{2}%$/, `${clave}: formato español con dos decimales`);
+    assert.equal(resultado, esperado, `${clave}: conversión y redondeo`);
+  }
+  // Datos sintéticos solo para verificar el formateador, no métricas del modelo.
+  for (const [valor, esperado] of [[0.123456, '12,35%'], [0.5, '50,00%'], [1, '100,00%']]) {
+    assert.equal(app.porcentaje(valor), esperado);
+  }
+  for (const valor of [undefined, NaN, Infinity, -0.1, 1.1, '0.5']) {
+    assert.equal(app.porcentaje(valor), 'No disponible');
+  }
   assert.equal(app.porcentaje(null), 'No disponible');
   assert.equal(app.porcentaje(0), '0,00%');
-  assert.equal(app.reporte('neutro').support, 60);
+  for (const clase of metrics.clases) {
+    assert.equal(app.reporte(clase).support, metrics.reporte_clasificacion[clase].support);
+  }
   app.metricas.value = {};
   assert.equal(app.incompletos.value, true);
   assert.equal(app.matrizValida.value, false);

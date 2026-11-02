@@ -1,0 +1,17 @@
+# Versiones directas observadas y verificadas en el entorno integrado.
+# Complementa requirements-kelly.txt sin modificar el archivo de Kelly.
+fastapi==0.162.0
+uvicorn==0.54.0
+pydantic==2.14.2
+spacy==3.8.18
+nltk==3.10.4
+httpx==0.28.1
+pytest==9.2.0
+scikit-learn==1.9.1
+pandas==3.1.0
+numpy==2.5.4
+joblib==1.6.0
+matplotlib==3.11.2
+# Paquete linguistico instalado aparte de spaCy.
+es-core-news-sm==3.8.0
+# Su obtencion en un entorno limpio queda pendiente de verificar.

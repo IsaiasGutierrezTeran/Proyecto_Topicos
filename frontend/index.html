@@ -15,7 +15,7 @@
 
     body {
       margin: 0;
-      font-family: Arial, sans-serif;
+      font-family: 'Segoe UI', system-ui, sans-serif;
       background: #f3f6fb;
       color: #17243a;
     }
@@ -23,10 +23,26 @@
     header {
       background: #162b52;
       color: white;
-      padding: 25px 8%;
+      padding: 40px max(8%, calc((100% - 1014px) / 2));
     }
 
-    header h1 { margin: 0; }
+    header h1 { margin: 0; font-size: clamp(32px, 5vw, 48px); letter-spacing: -1.5px; }
+    header .descripcion { max-width: 680px; line-height: 1.65; color: #edf3ff; }
+    h2 { letter-spacing: -.4px; }
+    .sobrelinea { text-transform: uppercase; letter-spacing: 2px; font-size: 12px; font-weight: 700; }
+    .ejemplos { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0 18px; }
+    .ejemplos button { background: #edf3ff; color: #204987; margin: 0; padding: 9px 14px; }
+    .contador { text-align: right; color: #52647d; font-size: 13px; margin: 5px 0; }
+    label { display: block; font-weight: 600; margin-bottom: 10px; }
+    textarea:focus-visible { outline: 3px solid #b3cffb; border-color: #2563eb; }
+    .sentimiento-positivo { background: #e0f2eb; color: #175b45; }
+    .sentimiento-negativo { background: #fce8ec; color: #8f263d; }
+    .sentimiento-neutro { background: #edf1f7; color: #445570; }
+    .progreso.sentimiento-positivo { background: #278566; }
+    .progreso.sentimiento-negativo { background: #c35069; }
+    .progreso.sentimiento-neutro { background: #71829d; }
+    .nlp-ayuda { font-size: 13px; color: #52647d; margin-bottom: 10px !important; }
+    .nlp-valor { white-space: pre-wrap; }
 
     header p {
       color: #d0d9eb;
@@ -164,11 +180,13 @@
 <div id="app">
 
   <header>
+    <p class="sobrelinea">NLP · Machine Learning · Español</p>
     <h1>OpinIA</h1>
     <p>
       Sistema inteligente de análisis de sentimientos
       mediante NLP y Machine Learning
     </p>
+    <p class="descripcion">De una reseña a una predicción: explora cómo se transforma el texto y consulta la evidencia con la que se evaluó el clasificador.</p>
   </header>
 
   <main>
@@ -180,11 +198,16 @@
         y clasificar el sentimiento expresado.
       </p>
 
-      <textarea
+      <div class="ejemplos" aria-label="Cargar una reseña de ejemplo">
+        <button v-for="ejemplo in ejemplos" :key="ejemplo.nombre" @click="texto = ejemplo.texto" :disabled="cargando">{{ ejemplo.nombre }}</button>
+      </div>
+      <label for="resena">Tu reseña</label>
+      <textarea id="resena" aria-describedby="contador-resena" :disabled="cargando"
         v-model="texto"
         maxlength="5000"
         placeholder="Ejemplo: El producto es excelente, pero el envío tardó demasiado."
       ></textarea>
+      <p id="contador-resena" class="contador">{{ texto.length }} / 5000 caracteres · Mínimo 3 caracteres</p>
 
       <button
         @click="analizar"
@@ -193,7 +216,8 @@
         {{ cargando ? 'Analizando...' : 'Analizar sentimiento' }}
       </button>
 
-      <div v-if="error" class="resultado error">
+      <p role="status" aria-live="polite">{{ cargando ? 'Procesando el texto y consultando el modelo…' : '' }}</p>
+      <div v-if="error" class="resultado error" role="alert">
         {{ error }}
       </div>
     </section>
@@ -201,7 +225,7 @@
     <section v-if="prediccion" class="card">
       <h2>Resultado del modelo</h2>
 
-      <div class="resultado">
+      <div class="resultado" :class="colorClase(prediccion.sentimiento)" aria-live="polite">
         <div class="etiqueta">
           {{ prediccion.sentimiento }}
         </div>
@@ -214,50 +238,24 @@
         :key="clase"
       >
         <strong>{{ clase }}:</strong>
-        {{ (probabilidad * 100).toFixed(2) }}%
+        {{ porcentaje(probabilidad) }}
 
         <div class="barra">
-          <div class="progreso"
+          <div class="progreso" :class="colorClase(clase)"
                :style="{width: (probabilidad * 100) + '%'}">
           </div>
         </div>
       </div>
+      <p class="ayuda">Es una predicción estadística y puede equivocarse. Las probabilidades expresan la estimación del modelo, no una certeza sobre la intención de la persona.</p>
     </section>
 
     <section v-if="procesamiento" class="card">
       <h2>Procesamiento NLP paso a paso</h2>
 
       <div class="grid">
-
-        <div class="dato">
-          <h4>1. Texto normalizado</h4>
-          <p>{{ procesamiento.normalizado }}</p>
-        </div>
-
-        <div class="dato">
-          <h4>2. Tokenización</h4>
-          <p>{{ procesamiento.tokens.join(', ') }}</p>
-        </div>
-
-        <div class="dato">
-          <h4>3. Sin stop words</h4>
-          <p>
-            {{ procesamiento.sin_stopwords.join(', ') }}
-          </p>
-        </div>
-
-        <div class="dato">
-          <h4>4. Stemming</h4>
-          <p>{{ procesamiento.stemming.join(', ') }}</p>
-        </div>
-
-        <div class="dato">
-          <h4>5. Lematización</h4>
-          <p>
-            {{ procesamiento.lematizacion.join(', ') }}
-          </p>
-        </div>
-
+        <article v-for="etapa in etapasNlp" :key="etapa.nombre" class="dato">
+          <h4>{{ etapa.nombre }}</h4><p class="nlp-ayuda">{{ etapa.ayuda }}</p><p class="nlp-valor">{{ etapa.valor }}</p>
+        </article>
       </div>
     </section>
 
@@ -312,7 +310,7 @@
         <p v-else>No disponible</p>
         <p class="ayuda">Precision: cuántas predicciones de una clase fueron correctas. Recall: cuántos ejemplos reales de esa clase fueron detectados. F1 combina ambas medidas. Support es el número de ejemplos reales evaluados.</p>
         <h3>Comparaciones experimentales</h3>
-        <p class="dato">Comparación pendiente de incorporar</p>
+        <p class="dato">Comparación experimental pendiente de incorporar</p>
         <p class="ayuda">El JSON actual no contiene comparaciones de Naive Bayes frente a regresión logística, stemming frente a lematización ni unigramas frente a bigramas. La validación cruzada disponible se muestra arriba.</p>
       </div>
 
@@ -344,6 +342,44 @@ createApp({
     const metricas = ref(null);
     const mensajeMetricas = ref("");
     const cargandoMetricas = ref(false);
+    const ejemplos = [
+      {nombre: 'Ejemplo positivo', texto: 'El producto es excelente y llegó a tiempo. Estoy satisfecho con la compra.'},
+      {nombre: 'Ejemplo negativo', texto: 'El producto llegó roto y no funciona. No recomiendo esta compra.'},
+      {nombre: 'Ejemplo neutro', texto: 'El paquete contiene un cable de un metro y un manual de instrucciones.'}
+    ];
+    const colorClase = c => ['positivo', 'negativo', 'neutro'].includes(c) ? 'sentimiento-' + c : '';
+    const lista = v => Array.isArray(v) ? (v.length ? v.join(' · ') : 'Sin elementos') : 'No disponible';
+    const eliminadas = computed(() => {
+      const p = procesamiento.value;
+      if (!Array.isArray(p?.tokens) || !Array.isArray(p?.sin_stopwords)) return null;
+      // Diferencia por ocurrencias; solo se deriva de las dos listas recibidas.
+      const restantes = [...p.sin_stopwords];
+      return p.tokens.filter(token => {
+        const indice = restantes.indexOf(token);
+        if (indice < 0) return true;
+        restantes.splice(indice, 1);
+        return false;
+      });
+    });
+    const etapasNlp = computed(() => {
+      const p = procesamiento.value || {};
+      return [
+        {nombre: '1. Texto original', ayuda: 'Entrada recibida por el backend.', valor: p.original ?? 'No disponible'},
+        {nombre: '2. Normalización', ayuda: 'Minúsculas, limpieza de URLs, números, puntuación y símbolos.', valor: p.normalizado ?? 'No disponible'},
+        {nombre: '3. Tokenización', ayuda: 'Palabras alfabéticas identificadas por spaCy.', valor: lista(p.tokens)},
+        {nombre: '4. Stop words', ayuda: 'Se conservan negaciones. Eliminadas: ' + lista(eliminadas.value) + '. Tokens conservados:', valor: lista(p.sin_stopwords)},
+        {nombre: '5. Stemming', ayuda: 'Raíces aproximadas calculadas con Snowball para español.', valor: lista(p.stemming)},
+        {nombre: '6. Lematización', ayuda: 'Formas base estimadas por el modelo lingüístico de spaCy.', valor: lista(p.lematizacion)}
+      ];
+    });
+    async function mensajeError(respuesta, defecto) {
+      try {
+        const datos = await respuesta.json();
+        if (typeof datos.detail === 'string') return datos.detail;
+        if (respuesta.status === 422) return 'Introduce un texto válido de entre 3 y 5000 caracteres, con palabras.';
+      } catch (_) { /* Puede haber una respuesta sin JSON. */ }
+      return defecto;
+    }
     const objeto = v => v !== null && typeof v === 'object' && !Array.isArray(v);
     const valido = v => typeof v === 'number' && Number.isFinite(v) && v >= 0 && v <= 1;
     const esConteo = v => Number.isInteger(v) && v >= 0;
@@ -378,6 +414,7 @@ createApp({
     const incompletos = computed(() => indicadores.some(i => !valido(metricas.value?.[i.clave])) || !metricas.value?.modelo_ganador || !parametros.value.nlp__metodo || ngramas.value === 'No disponible' || !valido(metricas.value?.f1_macro_cv) || !valido(metricas.value?.f1_macro_baseline_mayoritaria) || !matrizValida.value || clases.value.some(c => ['precision', 'recall', 'f1-score'].some(k => !valido(reporte(c)[k])) || !esConteo(reporte(c).support)));
 
     async function analizar() {
+      if (cargando.value) return;
       error.value = "";
       procesamiento.value = null;
       prediccion.value = null;
@@ -386,6 +423,11 @@ createApp({
         error.value = "Introduce una reseña.";
         return;
       }
+      if (texto.value.trim().length < 3 || texto.value.length > 5000) {
+        error.value = 'La reseña debe tener entre 3 y 5000 caracteres.';
+        return;
+      }
+      const textoEnviado = texto.value;
 
       cargando.value = true;
 
@@ -393,11 +435,11 @@ createApp({
         const respuesta = await fetch("/preprocesar", {
           method: "POST",
           headers: {"Content-Type": "application/json"},
-          body: JSON.stringify({texto: texto.value})
+          body: JSON.stringify({texto: textoEnviado})
         });
 
         if (!respuesta.ok) {
-          throw new Error("No se pudo procesar el texto.");
+          throw new Error(await mensajeError(respuesta, 'No se pudo procesar el texto. Inténtalo de nuevo.'));
         }
 
         procesamiento.value = await respuesta.json();
@@ -405,23 +447,23 @@ createApp({
         const rModelo = await fetch("/predecir", {
           method: "POST",
           headers: {"Content-Type": "application/json"},
-          body: JSON.stringify({texto: texto.value})
+          body: JSON.stringify({texto: textoEnviado})
         });
 
         if (rModelo.status === 503) {
           error.value =
-            "El NLP funciona. El modelo de clasificación todavía no está integrado.";
+            "El texto se procesó, pero el modelo no está disponible en este momento.";
           return;
         }
 
         if (!rModelo.ok) {
-          throw new Error("Error al realizar la predicción.");
+          throw new Error(await mensajeError(rModelo, 'No se pudo obtener la predicción. Inténtalo de nuevo.'));
         }
 
         prediccion.value = await rModelo.json();
 
       } catch (e) {
-        error.value = e.message;
+        error.value = e instanceof TypeError ? 'No se pudo conectar con la API. Comprueba que el servidor esté iniciado.' : e.message;
       } finally {
         cargando.value = false;
       }
@@ -458,7 +500,7 @@ createApp({
     }
 
     return {
-      texto, cargando, procesamiento,
+      texto, cargando, procesamiento, ejemplos, etapasNlp, eliminadas, colorClase,
       prediccion, error, metricas,
       mensajeMetricas, analizar, cargarMetricas, cargandoMetricas,
       indicadores, parametros, clases, reporte, ngramas, matrizValida,
