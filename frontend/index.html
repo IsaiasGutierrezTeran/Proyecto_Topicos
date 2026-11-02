@@ -15,7 +15,7 @@
 
     body {
       margin: 0;
-      font-family: Arial, sans-serif;
+      font-family: 'Segoe UI', system-ui, sans-serif;
       background: #f3f6fb;
       color: #17243a;
     }
@@ -23,10 +23,26 @@
     header {
       background: #162b52;
       color: white;
-      padding: 25px 8%;
+      padding: 40px max(8%, calc((100% - 1014px) / 2));
     }
 
-    header h1 { margin: 0; }
+    header h1 { margin: 0; font-size: clamp(32px, 5vw, 48px); letter-spacing: -1.5px; }
+    header .descripcion { max-width: 680px; line-height: 1.65; color: #edf3ff; }
+    h2 { letter-spacing: -.4px; }
+    .sobrelinea { text-transform: uppercase; letter-spacing: 2px; font-size: 12px; font-weight: 700; }
+    .ejemplos { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0 18px; }
+    .ejemplos button { background: #edf3ff; color: #204987; margin: 0; padding: 9px 14px; }
+    .contador { text-align: right; color: #52647d; font-size: 13px; margin: 5px 0; }
+    label { display: block; font-weight: 600; margin-bottom: 10px; }
+    textarea:focus-visible { outline: 3px solid #b3cffb; border-color: #2563eb; }
+    .sentimiento-positivo { background: #e0f2eb; color: #175b45; }
+    .sentimiento-negativo { background: #fce8ec; color: #8f263d; }
+    .sentimiento-neutro { background: #edf1f7; color: #445570; }
+    .progreso.sentimiento-positivo { background: #278566; }
+    .progreso.sentimiento-negativo { background: #c35069; }
+    .progreso.sentimiento-neutro { background: #71829d; }
+    .nlp-ayuda { font-size: 13px; color: #52647d; margin-bottom: 10px !important; }
+    .nlp-valor { white-space: pre-wrap; }
 
     header p {
       color: #d0d9eb;
@@ -133,6 +149,27 @@
       color: #65748a;
     }
 
+    .metricas { line-height: 1.55; }
+    .metricas h3 { margin-top: 28px; }
+    .indicadores { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-top: 24px; }
+    .indicador { padding: 17px; border: 1px solid #dce5f2; border-top: 4px solid #2563eb; border-radius: 10px; background: #f8faff; }
+    .indicador h3 { margin: 0; font-size: 15px; }
+    .indicador strong { display: block; font-size: 28px; color: #194bb0; margin: 10px 0; }
+    .indicador p, .ayuda { color: #52647d; }
+    .indicador p { margin: 0; font-size: 13px; }
+    .modelo dt { font-weight: bold; color: #52647d; }
+    .modelo dd { margin: 5px 0 0; overflow-wrap: anywhere; }
+    .modelo ul { margin: 0; padding-left: 20px; }
+    .tabla-scroll { overflow-x: auto; margin: 15px 0; }
+    .metricas table { width: 100%; min-width: 420px; border-spacing: 3px; text-align: center; }
+    .metricas caption { text-align: left; margin-bottom: 8px; font-weight: bold; }
+    .metricas th, .metricas td { padding: 12px 8px; border-radius: 5px; background: #f5f8fc; }
+    .metricas th { background: #edf2fa; }
+    .metricas td.acierto { background: #dcece8; color: #185747; font-weight: bold; }
+    .aviso { background: #fff7e6; border-left: 4px solid #bc862a; padding: 12px 16px; border-radius: 6px; }
+    button:focus-visible { outline: 3px solid #162b52; outline-offset: 3px; }
+    @media(max-width: 850px) { .indicadores { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media(max-width: 450px) { .indicadores { grid-template-columns: 1fr; } .card { padding: 18px; } }
     @media(max-width: 650px) {
       .grid { grid-template-columns: 1fr; }
     }
@@ -143,11 +180,13 @@
 <div id="app">
 
   <header>
+    <p class="sobrelinea">NLP · Machine Learning · Español</p>
     <h1>OpinIA</h1>
     <p>
       Sistema inteligente de análisis de sentimientos
       mediante NLP y Machine Learning
     </p>
+    <p class="descripcion">De una reseña a una predicción: explora cómo se transforma el texto y consulta la evidencia con la que se evaluó el clasificador.</p>
   </header>
 
   <main>
@@ -159,11 +198,16 @@
         y clasificar el sentimiento expresado.
       </p>
 
-      <textarea
+      <div class="ejemplos" aria-label="Cargar una reseña de ejemplo">
+        <button v-for="ejemplo in ejemplos" :key="ejemplo.nombre" @click="texto = ejemplo.texto" :disabled="cargando">{{ ejemplo.nombre }}</button>
+      </div>
+      <label for="resena">Tu reseña</label>
+      <textarea id="resena" aria-describedby="contador-resena" :disabled="cargando"
         v-model="texto"
         maxlength="5000"
         placeholder="Ejemplo: El producto es excelente, pero el envío tardó demasiado."
       ></textarea>
+      <p id="contador-resena" class="contador">{{ texto.length }} / 5000 caracteres · Mínimo 3 caracteres</p>
 
       <button
         @click="analizar"
@@ -172,7 +216,8 @@
         {{ cargando ? 'Analizando...' : 'Analizar sentimiento' }}
       </button>
 
-      <div v-if="error" class="resultado error">
+      <p role="status" aria-live="polite">{{ cargando ? 'Procesando el texto y consultando el modelo…' : '' }}</p>
+      <div v-if="error" class="resultado error" role="alert">
         {{ error }}
       </div>
     </section>
@@ -180,7 +225,7 @@
     <section v-if="prediccion" class="card">
       <h2>Resultado del modelo</h2>
 
-      <div class="resultado">
+      <div class="resultado" :class="colorClase(prediccion.sentimiento)" aria-live="polite">
         <div class="etiqueta">
           {{ prediccion.sentimiento }}
         </div>
@@ -193,63 +238,83 @@
         :key="clase"
       >
         <strong>{{ clase }}:</strong>
-        {{ (probabilidad * 100).toFixed(2) }}%
+        {{ porcentaje(probabilidad) }}
 
         <div class="barra">
-          <div class="progreso"
+          <div class="progreso" :class="colorClase(clase)"
                :style="{width: (probabilidad * 100) + '%'}">
           </div>
         </div>
       </div>
+      <p class="ayuda">Es una predicción estadística y puede equivocarse. Las probabilidades expresan la estimación del modelo, no una certeza sobre la intención de la persona.</p>
     </section>
 
     <section v-if="procesamiento" class="card">
       <h2>Procesamiento NLP paso a paso</h2>
 
       <div class="grid">
-
-        <div class="dato">
-          <h4>1. Texto normalizado</h4>
-          <p>{{ procesamiento.normalizado }}</p>
-        </div>
-
-        <div class="dato">
-          <h4>2. Tokenización</h4>
-          <p>{{ procesamiento.tokens.join(', ') }}</p>
-        </div>
-
-        <div class="dato">
-          <h4>3. Sin stop words</h4>
-          <p>
-            {{ procesamiento.sin_stopwords.join(', ') }}
-          </p>
-        </div>
-
-        <div class="dato">
-          <h4>4. Stemming</h4>
-          <p>{{ procesamiento.stemming.join(', ') }}</p>
-        </div>
-
-        <div class="dato">
-          <h4>5. Lematización</h4>
-          <p>
-            {{ procesamiento.lematizacion.join(', ') }}
-          </p>
-        </div>
-
+        <article v-for="etapa in etapasNlp" :key="etapa.nombre" class="dato">
+          <h4>{{ etapa.nombre }}</h4><p class="nlp-ayuda">{{ etapa.ayuda }}</p><p class="nlp-valor">{{ etapa.valor }}</p>
+        </article>
       </div>
     </section>
 
     <section class="card">
       <h2>Métricas del modelo</h2>
+      <p class="ayuda">Resultados del modelo obtenidos directamente de la API.</p>
 
-      <button @click="cargarMetricas">
-        Consultar métricas
+      <button @click="cargarMetricas" :disabled="cargandoMetricas">
+        {{ cargandoMetricas ? 'Consultando…' : 'Consultar métricas' }}
       </button>
+      <p role="status" aria-live="polite">{{ cargandoMetricas ? 'Cargando resultados del modelo…' : '' }}</p>
 
-      <pre v-if="metricas">{{ JSON.stringify(metricas, null, 2) }}</pre>
+      <div v-if="metricas" class="metricas">
+        <p v-if="incompletos" class="aviso" role="status">Datos incompletos: los campos ausentes o inválidos aparecen como «No disponible».</p>
+        <div class="indicadores">
+          <article v-for="i in indicadores" :key="i.clave" class="indicador">
+            <h3>{{ i.nombre }}</h3><strong>{{ porcentaje(metricas[i.clave]) }}</strong><p>{{ i.descripcion }}</p>
+          </article>
+        </div>
+        <h3>Modelo seleccionado</h3>
+        <dl class="grid modelo">
+          <div><dt>Modelo ganador</dt><dd>{{ metricas.modelo_ganador || 'No disponible' }}</dd></div>
+          <div><dt>Mejores hiperparámetros</dt><dd><ul v-if="Object.keys(parametros).length"><li v-for="(valor, clave) in parametros" :key="clave">{{ clave }}: {{ valor }}</li></ul><span v-else>No disponible</span></dd></div>
+          <div><dt>Método NLP</dt><dd>{{ parametros.nlp__metodo || 'No disponible' }}</dd></div>
+          <div><dt>N-gramas</dt><dd>{{ ngramas }}</dd></div>
+          <div><dt>F1 macro · validación cruzada</dt><dd>{{ porcentaje(metricas.f1_macro_cv) }}</dd></div>
+          <div><dt>F1 macro · línea base mayoritaria</dt><dd>{{ porcentaje(metricas.f1_macro_baseline_mayoritaria) }}</dd></div>
+        </dl>
+        <p v-if="metricas.pipeline_completo_con_nlp_de_isaias === false" class="aviso">La integración del pipeline completo con el NLP de Isaías está pendiente. Se muestran los resultados del preprocesamiento evaluado.</p>
+        <p v-if="metricas.nota" class="ayuda">{{ metricas.nota }}</p>
+        <h3>Comparación con la línea base</h3>
+        <div class="dato" v-for="fila in comparacion" :key="fila.nombre">
+          <strong>{{ fila.nombre }}: {{ porcentaje(fila.valor) }}</strong>
+          <div class="barra" aria-hidden="true"><div class="progreso" :style="{width: valido(fila.valor) ? fila.valor * 100 + '%' : '0%'}"></div></div>
+        </div>
+        <p class="ayuda">La línea base predice siempre la clase mayoritaria. El F1 macro da el mismo peso a cada sentimiento; se compara aquí con el F1 del ganador en prueba.</p>
+        <h3>Matriz de confusión</h3>
+        <div v-if="matrizValida" class="tabla-scroll" tabindex="0" role="region" aria-label="Matriz de confusión">
+          <table><caption>Filas: clase real · Columnas: clase predicha</caption>
+            <thead><tr><th scope="col">Real / Predicho</th><th v-for="c in clases" :key="c" scope="col">{{ etiqueta(c) }}</th></tr></thead>
+            <tbody><tr v-for="(fila, i) in metricas.matriz_confusion" :key="clases[i]"><th scope="row">{{ etiqueta(clases[i]) }}</th><td v-for="(valor, j) in fila" :key="j" :class="{acierto: i === j}">{{ valor }}</td></tr></tbody>
+          </table>
+        </div>
+        <p v-else class="ayuda">Matriz no disponible o incompleta.</p>
+        <p class="ayuda">La diagonal verde representa aciertos. Fuera de ella aparecen errores: una fila Negativo y columna Neutro cuenta reseñas negativas clasificadas como neutras.</p>
+        <h3>Resultados por clase</h3>
+        <div v-if="clases.length" class="tabla-scroll" tabindex="0" role="region" aria-label="Métricas por sentimiento">
+          <table><caption>Evaluación en el conjunto de prueba</caption><thead><tr><th scope="col">Sentimiento</th><th scope="col">Precision</th><th scope="col">Recall</th><th scope="col">F1-score</th><th scope="col">Support</th></tr></thead>
+            <tbody><tr v-for="c in clases" :key="c"><th scope="row">{{ etiqueta(c) }}</th><td>{{ porcentaje(reporte(c).precision) }}</td><td>{{ porcentaje(reporte(c).recall) }}</td><td>{{ porcentaje(reporte(c)['f1-score']) }}</td><td>{{ conteo(reporte(c).support) }}</td></tr></tbody>
+          </table>
+        </div>
+        <p v-else>No disponible</p>
+        <p class="ayuda">Precision: cuántas predicciones de una clase fueron correctas. Recall: cuántos ejemplos reales de esa clase fueron detectados. F1 combina ambas medidas. Support es el número de ejemplos reales evaluados.</p>
+        <h3>Comparaciones experimentales</h3>
+        <p class="dato">Comparación experimental pendiente de incorporar</p>
+        <p class="ayuda">El JSON actual no contiene comparaciones de Naive Bayes frente a regresión logística, stemming frente a lematización ni unigramas frente a bigramas. La validación cruzada disponible se muestra arriba.</p>
+      </div>
 
-      <p v-if="mensajeMetricas">
+      <p v-if="mensajeMetricas" class="resultado error" role="alert">
         {{ mensajeMetricas }}
       </p>
     </section>
@@ -265,7 +330,7 @@
 </div>
 
 <script>
-const {createApp, ref} = Vue;
+const {createApp, ref, computed} = Vue;
 
 createApp({
   setup() {
@@ -276,8 +341,80 @@ createApp({
     const error = ref("");
     const metricas = ref(null);
     const mensajeMetricas = ref("");
+    const cargandoMetricas = ref(false);
+    const ejemplos = [
+      {nombre: 'Ejemplo positivo', texto: 'El producto es excelente y llegó a tiempo. Estoy satisfecho con la compra.'},
+      {nombre: 'Ejemplo negativo', texto: 'El producto llegó roto y no funciona. No recomiendo esta compra.'},
+      {nombre: 'Ejemplo neutro', texto: 'El paquete contiene un cable de un metro y un manual de instrucciones.'}
+    ];
+    const colorClase = c => ['positivo', 'negativo', 'neutro'].includes(c) ? 'sentimiento-' + c : '';
+    const lista = v => Array.isArray(v) ? (v.length ? v.join(' · ') : 'Sin elementos') : 'No disponible';
+    const eliminadas = computed(() => {
+      const p = procesamiento.value;
+      if (!Array.isArray(p?.tokens) || !Array.isArray(p?.sin_stopwords)) return null;
+      // Diferencia por ocurrencias; solo se deriva de las dos listas recibidas.
+      const restantes = [...p.sin_stopwords];
+      return p.tokens.filter(token => {
+        const indice = restantes.indexOf(token);
+        if (indice < 0) return true;
+        restantes.splice(indice, 1);
+        return false;
+      });
+    });
+    const etapasNlp = computed(() => {
+      const p = procesamiento.value || {};
+      return [
+        {nombre: '1. Texto original', ayuda: 'Entrada recibida por el backend.', valor: p.original ?? 'No disponible'},
+        {nombre: '2. Normalización', ayuda: 'Minúsculas, limpieza de URLs, números, puntuación y símbolos.', valor: p.normalizado ?? 'No disponible'},
+        {nombre: '3. Tokenización', ayuda: 'Palabras alfabéticas identificadas por spaCy.', valor: lista(p.tokens)},
+        {nombre: '4. Stop words', ayuda: 'Se conservan negaciones. Eliminadas: ' + lista(eliminadas.value) + '. Tokens conservados:', valor: lista(p.sin_stopwords)},
+        {nombre: '5. Stemming', ayuda: 'Raíces aproximadas calculadas con Snowball para español.', valor: lista(p.stemming)},
+        {nombre: '6. Lematización', ayuda: 'Formas base estimadas por el modelo lingüístico de spaCy.', valor: lista(p.lematizacion)}
+      ];
+    });
+    async function mensajeError(respuesta, defecto) {
+      try {
+        const datos = await respuesta.json();
+        if (typeof datos.detail === 'string') return datos.detail;
+        if (respuesta.status === 422) return 'Introduce un texto válido de entre 3 y 5000 caracteres, con palabras.';
+      } catch (_) { /* Puede haber una respuesta sin JSON. */ }
+      return defecto;
+    }
+    const objeto = v => v !== null && typeof v === 'object' && !Array.isArray(v);
+    const valido = v => typeof v === 'number' && Number.isFinite(v) && v >= 0 && v <= 1;
+    const esConteo = v => Number.isInteger(v) && v >= 0;
+    const porcentaje = v => valido(v) ? (v * 100).toLocaleString('es-BO', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '%' : 'No disponible';
+    const conteo = v => esConteo(v) ? v.toLocaleString('es-BO') : 'No disponible';
+    const etiqueta = c => ({negativo: 'Negativo', neutro: 'Neutro', positivo: 'Positivo'}[c] || c);
+    const indicadores = [
+      {clave: 'accuracy_test', nombre: 'Accuracy · prueba', descripcion: 'Proporción total de reseñas clasificadas correctamente.'},
+      {clave: 'precision_macro_test', nombre: 'Precision macro', descripcion: 'Promedio de precision con igual peso por clase.'},
+      {clave: 'recall_macro_test', nombre: 'Recall macro', descripcion: 'Promedio de la detección de cada sentimiento.'},
+      {clave: 'f1_macro_test', nombre: 'F1-score macro', descripcion: 'Equilibrio entre precision y recall por clase.'}
+    ];
+    const parametros = computed(() => objeto(metricas.value?.mejores_parametros) ? metricas.value.mejores_parametros : {});
+    const clases = computed(() => {
+      const c = metricas.value?.clases;
+      return Array.isArray(c) && c.length && c.every(v => typeof v === 'string' && v.trim()) && new Set(c).size === c.length ? c : [];
+    });
+    const reporte = c => objeto(metricas.value?.reporte_clasificacion?.[c]) ? metricas.value.reporte_clasificacion[c] : {};
+    const ngramas = computed(() => {
+      const r = parametros.value.tfidf__ngram_range;
+      if (!Array.isArray(r) || r.length !== 2 || !r.every(v => Number.isInteger(v) && v > 0) || r[0] > r[1]) return 'No disponible';
+      return r[0] === 1 && r[1] === 1 ? 'Unigramas (1, 1)' : r[0] === 1 && r[1] === 2 ? 'Unigramas y bigramas (1, 2)' : `Rango: ${r.join('–')}`;
+    });
+    const matrizValida = computed(() => {
+      const m = metricas.value?.matriz_confusion;
+      return clases.value.length > 0 && Array.isArray(m) && m.length === clases.value.length && m.every(f => Array.isArray(f) && f.length === clases.value.length && f.every(esConteo));
+    });
+    const comparacion = computed(() => [
+      {nombre: 'Ganador · F1 macro prueba', valor: metricas.value?.f1_macro_test},
+      {nombre: 'Línea base mayoritaria · F1 macro', valor: metricas.value?.f1_macro_baseline_mayoritaria}
+    ]);
+    const incompletos = computed(() => indicadores.some(i => !valido(metricas.value?.[i.clave])) || !metricas.value?.modelo_ganador || !parametros.value.nlp__metodo || ngramas.value === 'No disponible' || !valido(metricas.value?.f1_macro_cv) || !valido(metricas.value?.f1_macro_baseline_mayoritaria) || !matrizValida.value || clases.value.some(c => ['precision', 'recall', 'f1-score'].some(k => !valido(reporte(c)[k])) || !esConteo(reporte(c).support)));
 
     async function analizar() {
+      if (cargando.value) return;
       error.value = "";
       procesamiento.value = null;
       prediccion.value = null;
@@ -286,6 +423,11 @@ createApp({
         error.value = "Introduce una reseña.";
         return;
       }
+      if (texto.value.trim().length < 3 || texto.value.length > 5000) {
+        error.value = 'La reseña debe tener entre 3 y 5000 caracteres.';
+        return;
+      }
+      const textoEnviado = texto.value;
 
       cargando.value = true;
 
@@ -293,11 +435,11 @@ createApp({
         const respuesta = await fetch("/preprocesar", {
           method: "POST",
           headers: {"Content-Type": "application/json"},
-          body: JSON.stringify({texto: texto.value})
+          body: JSON.stringify({texto: textoEnviado})
         });
 
         if (!respuesta.ok) {
-          throw new Error("No se pudo procesar el texto.");
+          throw new Error(await mensajeError(respuesta, 'No se pudo procesar el texto. Inténtalo de nuevo.'));
         }
 
         procesamiento.value = await respuesta.json();
@@ -305,29 +447,31 @@ createApp({
         const rModelo = await fetch("/predecir", {
           method: "POST",
           headers: {"Content-Type": "application/json"},
-          body: JSON.stringify({texto: texto.value})
+          body: JSON.stringify({texto: textoEnviado})
         });
 
         if (rModelo.status === 503) {
           error.value =
-            "El NLP funciona. El modelo de clasificación todavía no está integrado.";
+            "El texto se procesó, pero el modelo no está disponible en este momento.";
           return;
         }
 
         if (!rModelo.ok) {
-          throw new Error("Error al realizar la predicción.");
+          throw new Error(await mensajeError(rModelo, 'No se pudo obtener la predicción. Inténtalo de nuevo.'));
         }
 
         prediccion.value = await rModelo.json();
 
       } catch (e) {
-        error.value = e.message;
+        error.value = e instanceof TypeError ? 'No se pudo conectar con la API. Comprueba que el servidor esté iniciado.' : e.message;
       } finally {
         cargando.value = false;
       }
     }
 
     async function cargarMetricas() {
+      if (cargandoMetricas.value) return;
+      cargandoMetricas.value = true;
       mensajeMetricas.value = "";
       metricas.value = null;
 
@@ -340,18 +484,27 @@ createApp({
           return;
         }
 
-        metricas.value = await respuesta.json();
+        const datos = await respuesta.json();
+        if (!objeto(datos)) {
+          mensajeMetricas.value = 'La API devolvió datos de métricas inválidos.';
+          return;
+        }
+        metricas.value = datos;
 
       } catch (e) {
         mensajeMetricas.value =
-          "No se pudo conectar con la API.";
+          "No se pudieron cargar las métricas. Comprueba la conexión con la API e inténtalo de nuevo.";
+      } finally {
+        cargandoMetricas.value = false;
       }
     }
 
     return {
-      texto, cargando, procesamiento,
+      texto, cargando, procesamiento, ejemplos, etapasNlp, eliminadas, colorClase,
       prediccion, error, metricas,
-      mensajeMetricas, analizar, cargarMetricas
+      mensajeMetricas, analizar, cargarMetricas, cargandoMetricas,
+      indicadores, parametros, clases, reporte, ngramas, matrizValida,
+      comparacion, incompletos, porcentaje, conteo, etiqueta, valido
     };
   }
 }).mount("#app");

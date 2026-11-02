@@ -67,20 +67,23 @@ def predecir(entrada: EntradaTexto):
             detail="El modelo todavía no está entrenado"
         )
 
-    prediccion = modelo.predict([entrada.texto])[0]
-
-    probabilidades = {
-        str(clase): float(probabilidad)
-        for clase, probabilidad in zip(
-            modelo.classes_,
-            modelo.predict_proba([entrada.texto])[0]
-        )
-    }
+    try:
+        prediccion = modelo.predict([entrada.texto])[0]
+        probabilidades = {
+            str(clase): float(probabilidad)
+            for clase, probabilidad in zip(
+                modelo.classes_,
+                modelo.predict_proba([entrada.texto])[0]
+            )
+        }
+    except (ValueError, TypeError) as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
 
     return {
         "sentimiento": str(prediccion),
         "probabilidades": probabilidades
     }
+
 
 
 @app.get("/metricas")
@@ -90,11 +93,22 @@ def obtener_metricas():
             status_code=503,
             detail="Las métricas todavía no están disponibles"
         )
+
+    with open(METRICAS_PATH, "r", encoding="utf-8") as archivo:
+        metricas = json.load(archivo)
+
+    if metricas is None:
+        raise HTTPException(
+            status_code=503,
+            detail="El archivo de métricas está vacío"
+        )
+
+    return metricas
+
+
 @app.get("/", include_in_schema=False)
 def mostrar_frontend():
     return FileResponse(
         BASE_DIR / "frontend" / "index.html"
     )
 
-    with open(METRICAS_PATH, "r", encoding="utf-8") as archivo:
-        return json.load(archivo)
