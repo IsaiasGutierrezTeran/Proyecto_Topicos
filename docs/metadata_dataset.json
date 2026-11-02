@@ -22,6 +22,127 @@
     "neutro": 60
   },
   "criterio": "1-2 estrellas=negativo; 3=neutro; 4-5=positivo",
-  "licencia": "NO VERIFICADA en la ficha del espejo mteb al 2026-11-02",
-  "nota_licencia": "Revisar y documentar las condiciones del corpus original antes de redistribuir reseñas."
+  "licencia": "Condiciones originales verificadas: uso academico; no republicar ni uso comercial",
+  "nota_licencia": "Revisar y documentar las condiciones del corpus original antes de redistribuir reseñas.",
+  "organizacion_original": "Amazon",
+  "espejo": "Massive Text Embedding Benchmark (MTEB)",
+  "autores_publicacion": [
+    "Phillip Keung",
+    "Yichao Lu",
+    "Gyorgy Szarvas",
+    "Noah A. Smith"
+  ],
+  "fuente_original": "https://registry.opendata.aws/amazon-reviews-ml/",
+  "licencia_url": "https://github.com/awslabs/open-data-docs/blob/main/docs/amazon-reviews-ml/license.txt",
+  "fecha_verificacion": "2026-11-02",
+  "columnas_espejo": [
+    "id",
+    "text",
+    "label",
+    "label_text"
+  ],
+  "columnas_originales_documentadas": [
+    "review text",
+    "review title",
+    "star rating",
+    "anonymized reviewer ID",
+    "anonymized product ID",
+    "product category"
+  ],
+  "fecha_obtencion_nota": "fecha_descarga_utc es el registro historico local, no una fecha demostrada por el proveedor; nueva reproduccion en resultados_finales_kelly/metadata_reproduccion.json",
+  "limpieza": [
+    "texto.strip; minimo 8 caracteres",
+    "reservoir por estrella con semilla 42/43 y splits originales",
+    "eliminar duplicados por strip/casefold dentro y entre splits, priorizando train"
+  ],
+  "limitaciones": [
+    "Tres estrellas no equivale necesariamente a neutralidad",
+    "Solo dominio de compras; no generaliza a redes sociales ni variantes regionales",
+    "Muestra pequena y balanceada artificialmente",
+    "Origen original retirado de AWS; espejo de terceros",
+    "No hay anotacion manual de sentimiento"
+  ],
+  "verificacion_muestra": "Regenerada desde JSONL versionados y comparada fila a fila con CSV locales",
+  "calidad_observada": {
+    "train": {
+      "filas": 600,
+      "nulos": {
+        "texto": 0,
+        "sentimiento": 0,
+        "estrellas": 0
+      },
+      "duplicados_texto": 0,
+      "clases": {
+        "positivo": 200,
+        "negativo": 200,
+        "neutro": 200
+      },
+      "estrellas": {
+        "3": 200,
+        "5": 100,
+        "4": 100,
+        "1": 100,
+        "2": 100
+      }
+    },
+    "test": {
+      "filas": 180,
+      "nulos": {
+        "texto": 0,
+        "sentimiento": 0,
+        "estrellas": 0
+      },
+      "duplicados_texto": 0,
+      "clases": {
+        "positivo": 60,
+        "negativo": 60,
+        "neutro": 60
+      },
+      "estrellas": {
+        "3": 60,
+        "5": 30,
+        "4": 30,
+        "1": 30,
+        "2": 30
+      }
+    },
+    "solapamiento_train_test": 0
+  },
+  "reproduccion": {
+    "fuente": "mteb/amazon_reviews_multi",
+    "idioma": "es",
+    "revision": "c379a6705fec24a2493fa68e011692605f44e119",
+    "sha256_procesados": {
+      "train": "ab338354b1b2b553a03d41f516bad157827623e2a341a8eca2322d9bc6a2d73d",
+      "test": "ad362ac9d7e3576e5dca1a7a96b35ab23185d7ad78ae5a55258787c3c396206c"
+    },
+    "sha256_crudos": {
+      "train": "031b005bb5aa09f762f582874722e4cae2647b35ac13363d8717333a9f1a40a4",
+      "test": "b087e09b822e56b8ecdfabddea9aed6ab746ed69ed8c6e84cd0e22ceabb6a3a1"
+    },
+    "url": "https://huggingface.co/datasets/mteb/amazon_reviews_multi",
+    "url_train": "https://huggingface.co/datasets/mteb/amazon_reviews_multi/resolve/c379a6705fec24a2493fa68e011692605f44e119/es/train.jsonl",
+    "url_test": "https://huggingface.co/datasets/mteb/amazon_reviews_multi/resolve/c379a6705fec24a2493fa68e011692605f44e119/es/test.jsonl",
+    "fecha_descarga_utc": "2026-11-02T23:24:51.864988+00:00",
+    "semilla": 42,
+    "split_test_independiente": true,
+    "total_origen_train": 200000,
+    "total_origen_test": 5000,
+    "tamano_train": 600,
+    "tamano_test": 180,
+    "distribucion_train": {
+      "positivo": 200,
+      "negativo": 200,
+      "neutro": 200
+    },
+    "distribucion_test": {
+      "positivo": 60,
+      "negativo": 60,
+      "neutro": 60
+    },
+    "criterio": "1-2 estrellas=negativo; 3=neutro; 4-5=positivo",
+    "licencia": "Condiciones originales: investigacion academica; prohibida republicacion y uso comercial",
+    "licencia_url": "https://github.com/awslabs/open-data-docs/blob/main/docs/amazon-reviews-ml/license.txt",
+    "nota_licencia": "Revisar y documentar las condiciones del corpus original antes de redistribuir reseñas."
+  }
 }

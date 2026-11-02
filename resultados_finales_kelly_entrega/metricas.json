@@ -1,0 +1,108 @@
+{
+  "tfidf": {
+    "analyzer": "word",
+    "binary": false,
+    "decode_error": "strict",
+    "dtype": "<class 'numpy.float64'>",
+    "encoding": "utf-8",
+    "input": "content",
+    "lowercase": true,
+    "max_df": 0.95,
+    "max_features": 5000,
+    "min_df": 1,
+    "ngram_range": [
+      1,
+      2
+    ],
+    "norm": "l2",
+    "preprocessor": null,
+    "smooth_idf": true,
+    "stop_words": null,
+    "strip_accents": "unicode",
+    "sublinear_tf": true,
+    "token_pattern": "(?u)\\b\\w\\w+\\b",
+    "tokenizer": null,
+    "use_idf": true,
+    "vocabulary": null
+  },
+  "vocabulario_efectivo": 5000,
+  "modelo_ganador": "Regresión logística",
+  "mejores_parametros": {
+    "clasificador__C": 0.5,
+    "nlp__metodo": "stemming",
+    "tfidf__ngram_range": [
+      1,
+      2
+    ]
+  },
+  "f1_macro_cv": 0.59622,
+  "f1_macro_baseline_mayoritaria": 0.16667,
+  "preprocesamiento_evaluado": [
+    "stemming",
+    "lematizacion"
+  ],
+  "pipeline_completo_con_nlp_de_isaias": true,
+  "accuracy_test": 0.61667,
+  "precision_macro_test": 0.60253,
+  "recall_macro_test": 0.61667,
+  "f1_macro_test": 0.60431,
+  "clases": [
+    "negativo",
+    "neutro",
+    "positivo"
+  ],
+  "matriz_confusion": [
+    [
+      41,
+      12,
+      7
+    ],
+    [
+      24,
+      22,
+      14
+    ],
+    [
+      2,
+      10,
+      48
+    ]
+  ],
+  "reporte_clasificacion": {
+    "negativo": {
+      "precision": 0.6119402985074627,
+      "recall": 0.6833333333333333,
+      "f1-score": 0.6456692913385826,
+      "support": 60.0
+    },
+    "neutro": {
+      "precision": 0.5,
+      "recall": 0.36666666666666664,
+      "f1-score": 0.4230769230769231,
+      "support": 60.0
+    },
+    "positivo": {
+      "precision": 0.6956521739130435,
+      "recall": 0.8,
+      "f1-score": 0.7441860465116279,
+      "support": 60.0
+    },
+    "accuracy": 0.6166666666666667,
+    "macro avg": {
+      "precision": 0.6025308241401687,
+      "recall": 0.6166666666666667,
+      "f1-score": 0.6043107536423779,
+      "support": 180.0
+    },
+    "weighted avg": {
+      "precision": 0.6025308241401687,
+      "recall": 0.6166666666666667,
+      "f1-score": 0.6043107536423779,
+      "support": 180.0
+    }
+  },
+  "train_ejemplos": 600,
+  "test_ejemplos": 180,
+  "semilla": 42,
+  "nota": "La selección se hizo con CV sobre train; test se usó solo para evaluar el ganador."
+}
