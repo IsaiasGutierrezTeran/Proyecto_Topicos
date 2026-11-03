@@ -1,0 +1,74 @@
+[
+  {
+    "original": "No me gustaron los productos, aunque la entrega fue rapida.",
+    "normalizado": "no me gustaron los productos aunque la entrega fue rapida",
+    "tokens": [
+      "no",
+      "me",
+      "gustaron",
+      "los",
+      "productos",
+      "aunque",
+      "la",
+      "entrega",
+      "fue",
+      "rapida"
+    ],
+    "sin_stopwords": [
+      "no",
+      "gustaron",
+      "productos",
+      "entrega",
+      "rapida"
+    ],
+    "stemming": [
+      "no",
+      "gust",
+      "product",
+      "entreg",
+      "rap"
+    ],
+    "lematizacion": [
+      "no",
+      "gustar",
+      "producto",
+      "entrega",
+      "rapir"
+    ]
+  },
+  {
+    "original": "El producto funciona, pero no cumple lo prometido.",
+    "normalizado": "el producto funciona pero no cumple lo prometido",
+    "tokens": [
+      "el",
+      "producto",
+      "funciona",
+      "pero",
+      "no",
+      "cumple",
+      "lo",
+      "prometido"
+    ],
+    "sin_stopwords": [
+      "producto",
+      "funciona",
+      "no",
+      "cumple",
+      "prometido"
+    ],
+    "stemming": [
+      "product",
+      "funcion",
+      "no",
+      "cumpl",
+      "promet"
+    ],
+    "lematizacion": [
+      "producto",
+      "funcionar",
+      "no",
+      "cumplir",
+      "prometer"
+    ]
+  }
+]

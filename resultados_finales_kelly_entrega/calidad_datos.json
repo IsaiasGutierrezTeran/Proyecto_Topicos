@@ -1,0 +1,45 @@
+{
+  "train": {
+    "filas": 600,
+    "nulos": {
+      "texto": 0,
+      "sentimiento": 0,
+      "estrellas": 0
+    },
+    "duplicados_texto": 0,
+    "clases": {
+      "positivo": 200,
+      "negativo": 200,
+      "neutro": 200
+    },
+    "estrellas": {
+      "3": 200,
+      "5": 100,
+      "4": 100,
+      "1": 100,
+      "2": 100
+    }
+  },
+  "test": {
+    "filas": 180,
+    "nulos": {
+      "texto": 0,
+      "sentimiento": 0,
+      "estrellas": 0
+    },
+    "duplicados_texto": 0,
+    "clases": {
+      "positivo": 60,
+      "negativo": 60,
+      "neutro": 60
+    },
+    "estrellas": {
+      "3": 60,
+      "5": 30,
+      "4": 30,
+      "1": 30,
+      "2": 30
+    }
+  },
+  "solapamiento_train_test": 0
+}

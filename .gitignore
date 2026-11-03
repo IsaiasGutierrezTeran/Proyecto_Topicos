@@ -17,3 +17,16 @@ __pycache__/
 # Archivos temporales
 *.log
 .DS_Store
+
+# Experimentos locales de Kelly: corpus con restricciones de republicaci?n
+data/raw/
+data/reproducido_kelly/
+artifacts_finales_kelly/
+resultados_finales_kelly/*local.csv
+resultados_finales_kelly/analisis_errores.csv
+*.bak
+
+# Repeticiones aisladas del mismo experimento
+artifacts_finales_kelly*/
+resultados_finales_kelly*/*local.csv
+resultados_finales_kelly*/analisis_errores.csv

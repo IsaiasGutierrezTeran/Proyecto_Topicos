@@ -12,6 +12,8 @@ import argparse
 import csv
 import json
 import random
+import hashlib
+import shutil
 import urllib.request
 from collections import Counter
 from datetime import datetime, timezone
@@ -40,7 +42,7 @@ def registro_a_ejemplo(registro: dict) -> tuple[str, int, str] | None:
     return texto.strip(), estrellas, sentimiento
 
 
-def seleccionar(split: str, por_clase: int) -> tuple[list[dict], int]:
+def seleccionar(split: str, por_clase: int, raw_dir: Path | None = None, revision: str = "main") -> tuple[list[dict], int]:
     """Muestreo reservoir por estrella sobre TODO el split, con semilla fija."""
     if por_clase % 2:
         raise ValueError("--por-clase debe ser par para distribuir estrellas 1/2 y 4/5.")
@@ -49,11 +51,18 @@ def seleccionar(split: str, por_clase: int) -> tuple[list[dict], int]:
     seen = Counter()
     depositos: dict[int, list[dict]] = {i: [] for i in range(1, 6)}
     rng = random.Random(SEED + (0 if split == "train" else 1))
-    url = f"{BASE_URL}/{split}.jsonl"
+    url = f"{BASE_URL.replace('/main/', '/' + revision + '/')}/{split}.jsonl"
+    raw_path = raw_dir / revision / f"{split}.jsonl" if raw_dir else None
+    if raw_path is not None and not raw_path.exists():
+        raw_path.parent.mkdir(parents=True, exist_ok=True)
+        temporal = raw_path.with_suffix(".part")
+        with urllib.request.urlopen(url, timeout=120) as response, temporal.open("wb") as out:
+            shutil.copyfileobj(response, out)
+        temporal.replace(raw_path)
     peticion = urllib.request.Request(url, headers={"User-Agent": "ProyectoTopicosNLP/1.0 (academico)"})
     print(f"Leyendo reseñas de {split} desde {url}")
     try:
-        with urllib.request.urlopen(peticion, timeout=120) as respuesta:
+        with (raw_path.open("rb") if raw_path is not None else urllib.request.urlopen(peticion, timeout=120)) as respuesta:
             for linea in respuesta:
                 if not linea.strip():
                     continue
@@ -96,9 +105,13 @@ def main() -> None:
     p = argparse.ArgumentParser(description="Preparar reseñas reales en español")
     p.add_argument("--train-por-clase", type=int, default=200)
     p.add_argument("--test-por-clase", type=int, default=60)
+    p.add_argument("--raw-dir", type=Path)
+    p.add_argument("--revision", default="main")
+    p.add_argument("--output-dir", type=Path, default=DESTINO)
+    p.add_argument("--metadata", type=Path, default=ROOT / "docs" / "metadata_dataset.json")
     args = p.parse_args()
-    train, total_train = seleccionar("train", args.train_por_clase)
-    test, total_test = seleccionar("test", args.test_por_clase)
+    train, total_train = seleccionar("train", args.train_por_clase, args.raw_dir, args.revision)
+    test, total_test = seleccionar("test", args.test_por_clase, args.raw_dir, args.revision)
     # Eliminar duplicados textuales entre conjuntos y dentro de cada conjunto.
     vistos = set()
     def sin_duplicados(muestras):
@@ -111,12 +124,15 @@ def main() -> None:
         return salida
     train = sin_duplicados(train)
     test = sin_duplicados(test)
-    guardar_csv(DESTINO / "train.csv", train)
-    guardar_csv(DESTINO / "test.csv", test)
+    guardar_csv(args.output_dir / "train.csv", train)
+    guardar_csv(args.output_dir / "test.csv", test)
     metadata = {
         "fuente": "mteb/amazon_reviews_multi", "idioma": "es",
+        "revision": args.revision,
+        "sha256_procesados": {split: hashlib.sha256((args.output_dir / f"{split}.csv").read_bytes()).hexdigest() for split in ["train", "test"]},
+        "sha256_crudos": {split: hashlib.sha256((args.raw_dir / args.revision / f"{split}.jsonl").read_bytes()).hexdigest() for split in ["train", "test"]} if args.raw_dir else None,
         "url": "https://huggingface.co/datasets/mteb/amazon_reviews_multi",
-        "url_train": f"{BASE_URL}/train.jsonl", "url_test": f"{BASE_URL}/test.jsonl",
+        "url_train": f"{BASE_URL.replace('/main/', '/' + args.revision + '/')}/train.jsonl", "url_test": f"{BASE_URL.replace('/main/', '/' + args.revision + '/')}/test.jsonl",
         "fecha_descarga_utc": datetime.now(timezone.utc).isoformat(),
         "semilla": SEED, "split_test_independiente": True,
         "total_origen_train": total_train, "total_origen_test": total_test,
@@ -124,16 +140,17 @@ def main() -> None:
         "distribucion_train": dict(Counter(x["sentimiento"] for x in train)),
         "distribucion_test": dict(Counter(x["sentimiento"] for x in test)),
         "criterio": "1-2 estrellas=negativo; 3=neutro; 4-5=positivo",
-        "licencia": "NO VERIFICADA en la ficha del espejo mteb al 2026-11-02",
+        "licencia": "Condiciones originales: investigacion academica; prohibida republicacion y uso comercial",
+        "licencia_url": "https://github.com/awslabs/open-data-docs/blob/main/docs/amazon-reviews-ml/license.txt",
         "nota_licencia": "Revisar y documentar las condiciones del corpus original antes de redistribuir reseñas."
     }
-    ruta_meta = ROOT / "docs" / "metadata_dataset.json"
+    ruta_meta = args.metadata
     ruta_meta.parent.mkdir(parents=True, exist_ok=True)
     ruta_meta.write_text(json.dumps(metadata, ensure_ascii=False, indent=2), encoding="utf-8")
     print("Dataset preparado:")
     print(f"  Entrenamiento: {len(train)} reseñas, {metadata['distribucion_train']}")
     print(f"  Prueba: {len(test)} reseñas, {metadata['distribucion_test']}")
-    print(f"  Archivos: {DESTINO}/train.csv y test.csv")
+    print(f"  Archivos: {args.output_dir}/train.csv y test.csv")
 
 
 if __name__ == "__main__":

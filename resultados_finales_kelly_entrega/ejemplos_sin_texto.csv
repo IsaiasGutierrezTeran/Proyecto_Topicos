@@ -1,0 +1,16 @@
+﻿real,predicho,confianza_prediccion,p_negativo,p_neutro,p_positivo,correcto,indice_test,posible_causa
+neutro,positivo,0.374,0.27204448116496976,0.3539380284640726,0.37401749037095755,False,15,Lectura manual: producto en perfecto estado y caja deteriorada. Valoracion mixta explicita con pero; el modelo prioriza la parte positiva.
+neutro,negativo,0.3665,0.3664651673810324,0.3410043827076258,0.29253044991134175,False,22,Lectura manual: valora bien el producto pero informa manchas y dosificador roto. Valoracion mixta explicita.
+neutro,negativo,0.4023,0.40225264961135093,0.298524386506964,0.2992229638816851,False,27,Lectura manual: defectos del producto junto con valoracion positiva del embalaje. La etiqueta tres estrellas agrega aspectos distintos.
+neutro,negativo,0.4053,0.4053416052431034,0.346192307625965,0.2484660871309316,False,4,Lectura manual: describe rotura y frustracion; lenguaje negativo pese a etiqueta de tres estrellas. Desacuerdo entre puntuacion y texto.
+neutro,negativo,0.3926,0.3926099099044792,0.3342004144588033,0.2731896756367174,False,8,"Lectura manual: aun no ha usado el comedero y refiere montaje complicado. Evidencia negativa sobre montaje, contexto insuficiente del uso."
+neutro,neutro,0.4085,0.3519548107590511,0.40845938360235545,0.23958580563859339,True,3,"Conector adversativo presente; revisar si contrapone valoraciones. Hipotesis, no causa demostrada."
+neutro,neutro,0.3939,0.3009974794781743,0.39392647755203125,0.3050760429697945,True,29,"Conector adversativo presente; revisar si contrapone valoraciones. Hipotesis, no causa demostrada."
+negativo,positivo,0.4646,0.2355979753647194,0.29984570284621176,0.4645563217890688,False,2,"Menos de 12 palabras: contexto escaso. Hipotesis, no causa demostrada."
+negativo,neutro,0.3881,0.3053207375078521,0.38808526473548216,0.30659399775666574,False,18,"Conector adversativo presente; revisar si contrapone valoraciones. Hipotesis, no causa demostrada."
+negativo,negativo,0.4253,0.42528461634806203,0.37385498920295607,0.20086039444898182,True,5,"Negacion explicita presente; su alcance puede ser ambiguo. Hipotesis, no causa demostrada."
+negativo,negativo,0.4683,0.4682760907820676,0.3257422533584746,0.2059816558594577,True,11,"Negacion explicita presente; su alcance puede ser ambiguo. Hipotesis, no causa demostrada."
+positivo,neutro,0.4081,0.21022737736211275,0.4080547949194462,0.38171782771844104,False,7,"Menos de 12 palabras: contexto escaso. Hipotesis, no causa demostrada."
+positivo,negativo,0.4561,0.45614678728612984,0.29667879749275433,0.24717441522111588,False,9,"Negacion explicita presente; su alcance puede ser ambiguo. Hipotesis, no causa demostrada."
+positivo,positivo,0.4612,0.26011807379718516,0.2786559099205594,0.46122601628225535,True,0,"Negacion explicita presente; su alcance puede ser ambiguo. Hipotesis, no causa demostrada."
+positivo,positivo,0.4411,0.2395748060389532,0.3193575883679498,0.44106760559309705,True,1,"Conector adversativo presente; revisar si contrapone valoraciones. Hipotesis, no causa demostrada."
