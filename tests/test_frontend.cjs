@@ -12,6 +12,58 @@ vm.runInNewContext(script, {
 });
 (async () => {
   const metrics = JSON.parse(fs.readFileSync('artifacts/metricas.json', 'utf8'));
+  // Lectura del CSV real, con comillas escapadas y JSON en una de sus columnas.
+  function csv(texto) {
+    const filas = []; let fila = [], campo = '', comillas = false;
+    for (let i = 0; i < texto.length; i++) {
+      const c = texto[i];
+      if (c === '"') {
+        if (comillas && texto[i + 1] === '"') {campo += '"'; i++;}
+        else comillas = !comillas;
+      } else if (!comillas && (c === ',' || c === '\n')) {
+        fila.push(campo.replace(/\r$/, '')); campo = '';
+        if (c === '\n') {filas.push(fila); fila = [];}
+      } else campo += c;
+    }
+    if (campo || fila.length) {fila.push(campo); filas.push(fila);}
+    const encabezado = filas.shift();
+    return filas.filter(f => f.length === encabezado.length).map(f => Object.fromEntries(encabezado.map((k, i) => [k.replace(/^\uFEFF/, ''), f[i]])));
+  }
+  const originales = csv(fs.readFileSync('resultados/comparacion_modelos.csv', 'utf8'));
+  const experimentos = originales.map(f => ({...f,
+    hiperparametro: f.hiperparametro ? Number(f.hiperparametro) : null,
+    ...Object.fromEntries(['f1_macro_cv','desviacion_cv','fold_1','fold_2','fold_3'].map(k => [k, Number(f[k])]))
+  }));
+  response = () => ({ok:true, json:async()=>({experimentos: [...experimentos].reverse()})});
+  await app.cargarExperimentos();
+  assert.equal(app.mensajeExperimentos.value, '');
+  assert.equal(app.experimentos.value.length, experimentos.length);
+  assert.equal(app.gruposExperimentos.value[0].filas.length, new Set(experimentos.map(f => f.modelo)).size);
+  for (const mejor of app.gruposExperimentos.value[0].filas) {
+    assert.equal(mejor.f1_macro_cv, Math.max(...experimentos.filter(f => f.modelo === mejor.modelo).map(f => f.f1_macro_cv)));
+  }
+  const controladas = app.gruposExperimentos.value[1].filas;
+  assert.equal(new Set(controladas.map(f => f.modelo)).size, 1);
+  assert.equal(new Set(controladas.map(f => f.hiperparametro)).size, 1);
+  assert.equal(new Set(controladas.map(f => f.preprocesamiento)).size, 2);
+  assert.equal(new Set(controladas.map(f => f.ngramas)).size, 2);
+  response = () => ({ok:true, json:async()=>({experimentos:[{...experimentos[0],f1_macro_cv:null}]})});
+  await app.cargarExperimentos();
+  assert.equal(app.experimentos.value.length, 0);
+  assert.match(app.mensajeExperimentos.value, /incompletos/);
+  response = () => ({ok:false, status:503, json:async()=>({detail:'Comparación experimental pendiente de incorporar'})});
+  await app.cargarExperimentos();
+  assert.match(app.mensajeExperimentos.value, /pendiente/);
+  assert.equal(app.cargandoExperimentos.value, false);
+  let terminarExperimentos;
+  response = () => new Promise(resolve => {terminarExperimentos=resolve;});
+  const cargaExperimentos = app.cargarExperimentos();
+  assert.equal(app.cargandoExperimentos.value, true);
+  const peticionesAntes = requests.length;
+  await app.cargarExperimentos();
+  assert.equal(requests.length, peticionesAntes);
+  terminarExperimentos({ok:true,json:async()=>({experimentos})});
+  await cargaExperimentos;
   for (const texto of ['', '  ', 'ab', 'a'.repeat(5001)]) {
     app.texto.value = texto;
     const antes = requests.length;

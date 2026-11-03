@@ -98,3 +98,44 @@ def test_adaptador_nlp_comparte_preprocesamiento():
     etapas = procesar_texto(texto)
     for metodo in ['stemming', 'lematizacion']:
         assert AdaptadorNLP(metodo=metodo).transform([texto]) == [' '.join(etapas[metodo])]
+
+
+def test_experimentos_csv_real():
+    import csv
+    from api.main import EXPERIMENTOS_PATH
+    with EXPERIMENTOS_PATH.open(encoding='utf-8-sig', newline='') as archivo:
+        originales = list(csv.DictReader(archivo))
+    respuesta = client.get('/experimentos')
+    assert respuesta.status_code == 200
+    filas = respuesta.json()['experimentos']
+    assert len(filas) == len(originales)
+    for fila, original in zip(filas, originales):
+        assert fila['modelo'] == original['modelo']
+        assert fila['preprocesamiento'] == original['preprocesamiento']
+        assert fila['ngramas'] == original['ngramas']
+        for campo in ['f1_macro_cv', 'desviacion_cv', 'fold_1', 'fold_2', 'fold_3']:
+            assert fila[campo] == float(original[campo])
+        assert fila['hiperparametro'] == (float(original['hiperparametro']) if original['hiperparametro'] else None)
+
+
+def test_experimentos_ausentes_no_bloquean_metricas(tmp_path, monkeypatch):
+    from api import main
+    monkeypatch.setattr(main, 'EXPERIMENTOS_PATH', tmp_path / 'ausente.csv')
+    respuesta = client.get('/experimentos')
+    assert respuesta.status_code == 503
+    assert 'pendiente' in respuesta.json()['detail']
+    assert client.get('/metricas').status_code == 200
+
+
+@pytest.mark.parametrize('contenido', [
+    '', 'columna\nvalor\n',
+    'modelo,preprocesamiento,ngramas,hiperparametro,f1_macro_cv,desviacion_cv,fold_1,fold_2,fold_3\n',
+    'modelo,preprocesamiento,ngramas,hiperparametro,f1_macro_cv,desviacion_cv,fold_1,fold_2,fold_3\nModelo,stemming,unigramas,1,NaN,0,0.5,0.5,0.5\n',
+    'modelo,preprocesamiento,ngramas,hiperparametro,f1_macro_cv,desviacion_cv,fold_1,fold_2,fold_3\nModelo,stemming,unigramas,1,0.5,0,0.5\n'
+])
+def test_experimentos_invalidos(tmp_path, monkeypatch, contenido):
+    from api import main
+    ruta = tmp_path / 'invalido.csv'
+    ruta.write_text(contenido, encoding='utf-8')
+    monkeypatch.setattr(main, 'EXPERIMENTOS_PATH', ruta)
+    assert client.get('/experimentos').status_code == 503

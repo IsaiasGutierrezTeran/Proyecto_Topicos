@@ -309,14 +309,37 @@
         </div>
         <p v-else>No disponible</p>
         <p class="ayuda">Precision: cuántas predicciones de una clase fueron correctas. Recall: cuántos ejemplos reales de esa clase fueron detectados. F1 combina ambas medidas. Support es el número de ejemplos reales evaluados.</p>
-        <h3>Comparaciones experimentales</h3>
-        <p class="dato">Comparación experimental pendiente de incorporar</p>
-        <p class="ayuda">El JSON actual no contiene comparaciones de Naive Bayes frente a regresión logística, stemming frente a lematización ni unigramas frente a bigramas. La validación cruzada disponible se muestra arriba.</p>
       </div>
 
       <p v-if="mensajeMetricas" class="resultado error" role="alert">
         {{ mensajeMetricas }}
       </p>
+    </section>
+
+    <section class="card metricas" aria-labelledby="titulo-experimentos" :aria-busy="cargandoExperimentos">
+      <h2 id="titulo-experimentos">Comparaciones experimentales</h2>
+      <p class="ayuda">Resultados reales de Kelly: validación cruzada sobre entrenamiento. Estos puntajes se usan para seleccionar el modelo; no son métricas del conjunto de prueba.</p>
+      <button @click="cargarExperimentos" :disabled="cargandoExperimentos">{{ cargandoExperimentos ? 'Consultando…' : 'Consultar comparaciones' }}</button>
+      <p role="status" aria-live="polite">{{ cargandoExperimentos ? 'Cargando experimentos…' : '' }}</p>
+      <p v-if="mensajeExperimentos" class="aviso" role="status">{{ mensajeExperimentos }}</p>
+      <template v-if="experimentos.length">
+        <p class="ayuda">Fuente: resultados/comparacion_modelos.csv · {{ experimentos.length }} configuraciones, incluida la línea base. Mismos tres folds estratificados.</p>
+        <div v-for="grupo in gruposExperimentos" :key="grupo.id">
+          <h3>{{ grupo.titulo }}</h3><p class="ayuda">{{ grupo.descripcion }}</p>
+          <div class="tabla-scroll" tabindex="0" role="region" :aria-label="grupo.titulo">
+            <table><caption>{{ grupo.titulo }}</caption>
+              <thead><tr><th scope="col">Modelo</th><th scope="col">NLP</th><th scope="col">N-gramas</th><th scope="col">Parámetro</th><th scope="col">F1 macro CV</th><th scope="col">Desv. (pp)</th></tr></thead>
+              <tbody><tr v-for="fila in grupo.filas" :key="claveExperimento(fila)"><th scope="row">{{ fila.modelo }}</th><td>{{ nombreNlp(fila.preprocesamiento) }}</td><td>{{ nombreNgramas(fila.ngramas) }}</td><td>{{ nombreParametro(fila) }}</td><td><strong>{{ porcentaje(fila.f1_macro_cv) }}</strong><div class="barra" aria-hidden="true"><div class="progreso" :style="{width: fila.f1_macro_cv * 100 + '%'}"></div></div></td><td>{{ decimal(fila.desviacion_cv * 100) }}</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+        <p class="ayuda">La desviación se expresa en puntos porcentuales (pp) entre folds; no es un intervalo de confianza. Diferencias pequeñas no demuestran significación estadística.</p>
+        <details><summary>Ver las {{ experimentos.length }} configuraciones y sus folds</summary>
+          <div class="tabla-scroll" tabindex="0" role="region" aria-label="Todos los experimentos">
+            <table><caption>Resultados completos ordenados por F1 macro CV</caption><thead><tr><th scope="col">Modelo y parámetro</th><th scope="col">NLP / N-gramas</th><th scope="col">Media CV</th><th scope="col">Fold 1</th><th scope="col">Fold 2</th><th scope="col">Fold 3</th></tr></thead><tbody><tr v-for="fila in experimentos" :key="claveExperimento(fila)"><th scope="row">{{ fila.modelo }} · {{ nombreParametro(fila) }}</th><td>{{ nombreNlp(fila.preprocesamiento) }} / {{ nombreNgramas(fila.ngramas) }}</td><td>{{ porcentaje(fila.f1_macro_cv) }}</td><td>{{ porcentaje(fila.fold_1) }}</td><td>{{ porcentaje(fila.fold_2) }}</td><td>{{ porcentaje(fila.fold_3) }}</td></tr></tbody></table>
+          </div>
+        </details>
+      </template>
     </section>
 
   </main>
@@ -342,6 +365,9 @@ createApp({
     const metricas = ref(null);
     const mensajeMetricas = ref("");
     const cargandoMetricas = ref(false);
+    const experimentos = ref([]);
+    const cargandoExperimentos = ref(false);
+    const mensajeExperimentos = ref('Consulta las comparaciones para cargar los resultados de validación cruzada.');
     const ejemplos = [
       {nombre: 'Ejemplo positivo', texto: 'El producto es excelente y llegó a tiempo. Estoy satisfecho con la compra.'},
       {nombre: 'Ejemplo negativo', texto: 'El producto llegó roto y no funciona. No recomiendo esta compra.'},
@@ -384,6 +410,42 @@ createApp({
     const valido = v => typeof v === 'number' && Number.isFinite(v) && v >= 0 && v <= 1;
     const esConteo = v => Number.isInteger(v) && v >= 0;
     const porcentaje = v => valido(v) ? (v * 100).toLocaleString('es-BO', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '%' : 'No disponible';
+    const decimal = v => v.toLocaleString('es-BO', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    const nombreNlp = v => ({stemming: 'Stemming', lematizacion: 'Lematización', ninguno: 'Sin NLP'}[v] || v);
+    const nombreNgramas = v => ({unigramas: 'Unigramas', unigramas_y_bigramas: 'Unigramas + bigramas', 'no aplica': 'No aplica'}[v] || v);
+    const nombreParametro = f => f.hiperparametro === null ? 'No aplica' : (f.modelo === 'Naive Bayes' ? 'α' : 'C') + ' = ' + f.hiperparametro;
+    const claveExperimento = f => JSON.stringify([f.modelo, f.preprocesamiento, f.ngramas, f.hiperparametro]);
+    const gruposExperimentos = computed(() => {
+      if (!experimentos.value.length) return [];
+      const mejores = [...new Map(experimentos.value.map(f => f.modelo).map(modelo => [modelo, experimentos.value.find(f => f.modelo === modelo)])).values()];
+      const ganador = experimentos.value.find(f => f.hiperparametro !== null);
+      const controladas = ganador ? experimentos.value.filter(f => f.modelo === ganador.modelo && f.hiperparametro === ganador.hiperparametro) : [];
+      return [
+        {id: 'modelos', titulo: 'Naive Bayes, regresión logística y línea base', descripcion: 'Mejor configuración observada de cada familia, elegida por la media de F1 macro CV.', filas: mejores},
+        {id: 'nlp', titulo: 'Stemming, lematización y n-gramas', descripcion: ganador ? `Comparación controlada: ${ganador.modelo}, ${nombreParametro(ganador)} fijo. Se comparan métodos NLP y unigramas frente a unigramas + bigramas.` : 'Sin configuraciones de modelos disponibles.', filas: controladas}
+      ];
+    });
+    async function cargarExperimentos() {
+      if (cargandoExperimentos.value) return;
+      cargandoExperimentos.value = true;
+      mensajeExperimentos.value = '';
+      experimentos.value = [];
+      try {
+        const respuesta = await fetch('/experimentos');
+        if (!respuesta.ok) throw new Error(await mensajeError(respuesta, 'No se pudieron consultar los experimentos.'));
+        const datos = await respuesta.json();
+        const filas = datos?.experimentos;
+        const puntajes = ['f1_macro_cv', 'desviacion_cv', 'fold_1', 'fold_2', 'fold_3'];
+        if (!Array.isArray(filas) || !filas.length || !filas.every(f => objeto(f) && ['modelo', 'preprocesamiento', 'ngramas'].every(k => typeof f[k] === 'string' && f[k].trim()) && puntajes.every(k => valido(f[k])) && (f.hiperparametro === null || (typeof f.hiperparametro === 'number' && Number.isFinite(f.hiperparametro) && f.hiperparametro > 0)))) {
+          throw new Error('Los datos experimentales están incompletos o no son válidos.');
+        }
+        experimentos.value = [...filas].sort((a, b) => b.f1_macro_cv - a.f1_macro_cv);
+      } catch (e) {
+        mensajeExperimentos.value = e instanceof TypeError ? 'No se pudo conectar con la API de experimentos. Comprueba que el servidor esté iniciado.' : e.message;
+      } finally {
+        cargandoExperimentos.value = false;
+      }
+    }
     const conteo = v => esConteo(v) ? v.toLocaleString('es-BO') : 'No disponible';
     const etiqueta = c => ({negativo: 'Negativo', neutro: 'Neutro', positivo: 'Positivo'}[c] || c);
     const indicadores = [
@@ -501,6 +563,8 @@ createApp({
 
     return {
       texto, cargando, procesamiento, ejemplos, etapasNlp, eliminadas, colorClase,
+      experimentos, cargandoExperimentos, mensajeExperimentos, cargarExperimentos, gruposExperimentos,
+      decimal, nombreNlp, nombreNgramas, nombreParametro, claveExperimento,
       prediccion, error, metricas,
       mensajeMetricas, analizar, cargarMetricas, cargandoMetricas,
       indicadores, parametros, clases, reporte, ngramas, matrizValida,
